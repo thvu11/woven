@@ -1,0 +1,14 @@
+services:
+  app:
+    image: ruby:3.3
+    working_dir: /app
+    command: /app/bin/woven-monopoly board.json rolls_${ROLL-1}.json --json
+    volumes:
+      - ./:/app
+
+  test:
+    image: ruby:3.3
+    working_dir: /app
+    command: rake test
+    volumes:
+      - ./:/app
