@@ -1,0 +1,41 @@
+#!/usr/bin/env ruby
+
+# Usage: bin/run-monopoly board.json rolls.json
+
+require "json"
+require "optparse"
+require_relative "../lib/monopoly"
+
+board_path, rolls_path = ARGV
+
+if board_path.nil? || rolls_path.nil?
+  warn "Usage: #{File.basename($PROGRAM_NAME)} board.json rolls.json [--json]"
+  exit 1
+end
+
+json_format = false
+
+OptionParser.new do |opts|
+  opts.banner = "Usage: #{File.basename($PROGRAM_NAME)} board.json rolls.json [--json]"
+  opts.on("--json", "Show result in json format") do
+    json_format = true
+  end
+end.parse!
+
+board_data = JSON.parse(File.read(board_path))
+rolls      = JSON.parse(File.read(rolls_path))
+
+unless rolls.all? { |r| r.is_a?(Integer) && r.positive? }
+  warn "rolls must be a list of positive integers"
+  exit 1
+end
+
+# A fresh Board per run, because properties carry mutable owner state.
+board  = Monopoly::Board.new(board_data)
+result = Monopoly::Game.new(board: board, rolls: rolls).play
+
+if json_format
+  puts Monopoly::Report.json_format(result, board)
+else
+  puts Monopoly::Report.format(result, board)
+end
